@@ -1,0 +1,68 @@
+function [x_data, z_data, turning_points] = plot_ray(coordinate, theta_i, c_z, h, sim_time)
+    switch nargin
+      case 4
+        sim_time = 10;
+    end
+    dt = 0.001;
+    d_theta = 0.01;
+    time = (0:dt:sim_time)';
+    num_steps = size(time,1);
+    depth_data = c_z.z;
+    velocity_data = c_z.c;
+    
+    x = coordinate.x;
+    z = coordinate.z;
+
+    x_data = zeros(num_steps,1);
+    z_data = zeros(num_steps,1);
+    turning_points = [];
+    seabed = min(h, min(z_data));
+
+    theta = theta_i;
+    c = interp1(depth_data, velocity_data, z);
+    
+    if(theta == 90)
+        c_up = interp1(depth_data, velocity_data, z-1);
+        if(c_up > c)
+            theta = theta - d_theta;
+        else
+            theta = theta + d_theta;
+        end
+    end
+    if(theta >= 90)
+        sign = -1;
+    else
+        sign = 1;
+    end
+    %
+    for t = 1:num_steps
+        x = x + c*dt*sind(theta);
+        z = z - sign*c*dt*cosd(theta);
+        if(z > 0 || z < seabed)
+            num_steps = num_steps-1;
+            x = x + c*dt;
+            sign = -sign;
+            x_data(t) = x;
+            z_data(t) = z_data(t-1);
+            turning_points(end+1, :) = [x_data(t), z_data(t)];
+            continue;
+        end
+        prev_c = c;
+        c = interp1(depth_data, velocity_data, z);
+        theta_temp = asind(c*sind(theta)/prev_c);
+        if(~isreal(theta_temp))   
+            num_steps = num_steps-1;
+            x = x + c*dt;
+            c = prev_c;
+            sign = -sign;
+            x_data(t) = x;
+            z_data(t) = z_data(t-1);
+            turning_points(end+1, :) = [x_data(t), z_data(t)];
+            continue;
+        end
+        theta = theta_temp;
+        x_data(t) = x;
+        z_data(t) = z;
+    end
+    plot(x_data, z_data);
+end
