@@ -5,8 +5,8 @@ close all;
 %% Inputs
 h = -3500; %height to sea bottom
 grad_inv_h = 0; %height at which speed gradient will be inverted
-source = -750;
-theta = 89;
+source = 0;
+theta = 75;
 grad_c = 1.63e-2; %speed gradient
 dt = 0.0001;
 tTot = 30;
@@ -33,6 +33,8 @@ subplot(1,4,1);
 plot(arrayfun(@(h) getC(h,grad_c,cBase, grad_inv_h),h_Range), h_Range) 
 title("Speed Profile")
 
+%% misc
+maxDepth = getMaxDepth(source, theta, getC(source,grad_c,cBase, grad_inv_h), grad_c);
 
 %% Functions
 function tracingPoints = getPoints(source, thetaOrigin, dt, grad, totalT, cStart, h, grad_inv_h)
@@ -105,4 +107,8 @@ if z >= h_inv %this keeps the gradient function  continuous
 else
     c = base + (grad * abs(z));
 end
+end
+
+function hmax = getMaxDepth(z_s, th_s, c_s, c_grad)
+hmax = z_s - (c_s/c_grad) + (c_s/(sind(th_s)*abs(c_grad)));
 end
